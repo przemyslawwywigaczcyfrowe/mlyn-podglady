@@ -1,0 +1,165 @@
+<!doctype html>
+<html lang="pl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>Kopiuj promocję - prototyp</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/semantic-ui/2.4.1/semantic.min.css">
+<style>
+  body { background:#f9f9f9; }
+  .proto-bar { background:#fff8db; border-bottom:1px solid #e0c97a; padding:8px 16px; font-size:13px; }
+  .sidebar-fake { position:fixed; top:37px; bottom:0; left:0; width:210px; background:#1b1c1d; padding-top:12px; }
+  .sidebar-fake .item { color:rgba(255,255,255,.8); padding:9px 18px; font-size:13px; display:block; }
+  .sidebar-fake .item.active { background:rgba(255,255,255,.1); color:#fff; }
+  .sidebar-fake .header { color:rgba(255,255,255,.5); padding:14px 18px 4px; font-size:11px; text-transform:uppercase; }
+  .main { margin-left:210px; padding:24px 28px; }
+  .hidden { display:none !important; }
+  .new-badge { background:#21ba45; color:#fff; border-radius:3px; padding:1px 5px; font-size:10px; margin-left:4px; vertical-align:middle; }
+  @media (max-width: 800px) { .sidebar-fake { display:none; } .main { margin-left:0; padding:16px; } }
+</style>
+</head>
+<body>
+<div class="proto-bar"><strong>Prototyp do klikania, nie panel sklepu.</strong> Nazwy promocji są przykładowe. Kliknij "Kopiuj" przy dowolnej promocji.</div>
+
+<div class="sidebar-fake">
+  <div class="header">Katalog</div>
+  <span class="item">Produkty</span><span class="item">Taksony</span>
+  <div class="header">Sprzedaż</div>
+  <span class="item">Zamówienia</span>
+  <div class="header">Marketing</div>
+  <span class="item active">Promocje koszykowe</span><span class="item">Promocje katalogowe</span>
+</div>
+
+<div class="main">
+  <!-- LISTA -->
+  <div id="lista">
+    <div class="ui stackable two column grid">
+      <div class="column"><h1 class="ui header"><i class="circular tasks icon"></i><div class="content">Promocje koszykowe<div class="sub header">Zarządzaj promocjami koszykowymi</div></div></h1></div>
+      <div class="right aligned middle aligned column"><a class="ui labeled icon primary button"><i class="plus icon"></i>Utwórz</a></div>
+    </div>
+    <div class="ui breadcrumb"><a class="section">Administracja</a><i class="right chevron icon divider"></i><div class="active section">Promocje koszykowe</div></div>
+    <div id="flash" class="ui icon positive message hidden"><i class="checkmark icon"></i><div class="content"><div class="header">Promocja skopiowana</div><p id="flash-text"></p></div></div>
+    <table class="ui sortable stackable very basic celled table" id="tabela">
+      <thead><tr><th>Kod</th><th>Nazwa</th><th>Priorytet</th><th>Oparta na kuponach</th><th>Ważna</th><th>Włączona</th><th>Akcje</th></tr></thead>
+      <tbody></tbody>
+    </table>
+  </div>
+
+  <!-- FORMULARZ KOPII -->
+  <div id="formularz" class="hidden">
+    <h1 class="ui header"><i class="circular tasks icon"></i><div class="content">Edytuj promocję koszykową<div class="sub header" id="f-sub"></div></div></h1>
+    <div class="ui breadcrumb"><a class="section" onclick="pokazListe()">Promocje koszykowe</a><i class="right chevron icon divider"></i><div class="active section" id="f-crumb"></div></div>
+    <div class="ui info message"><div class="header">To jest kopia promocji "<span id="f-zrodlo"></span>"</div>
+      <p>Skopiowano warunki, akcje, kanały, priorytet i tłumaczenia. Kody rabatowe nie zostały skopiowane. Wpisz nowy kod, nowe daty i wygeneruj kupony, a potem włącz promocję.</p></div>
+    <div id="f-blad" class="ui negative message hidden"><div class="header">Nie można zapisać</div><ul class="list" id="f-bledy"></ul></div>
+    <form class="ui form segment" onsubmit="return zapisz(event)">
+      <div class="two fields">
+        <div class="required field" id="pole-kod"><label>Kod</label><input id="f-kod"></div>
+        <div class="required field" id="pole-nazwa"><label>Nazwa</label><input id="f-nazwa"></div>
+      </div>
+      <div class="field"><label>Opis</label><textarea rows="2" id="f-opis"></textarea></div>
+      <div class="three fields">
+        <div class="field"><label>Priorytet</label><input id="f-prio" disabled></div>
+        <div class="field"><label>Limit użyć</label><input id="f-limit" placeholder="bez limitu"></div>
+        <div class="field"><label>&nbsp;</label><div class="ui toggle checkbox"><input type="checkbox" id="f-wyl" disabled><label>Wyłączna</label></div></div>
+      </div>
+      <div class="two fields">
+        <div class="required field" id="pole-od"><label>Data rozpoczęcia</label><input type="date" id="f-od"></div>
+        <div class="required field" id="pole-do"><label>Data zakończenia</label><input type="date" id="f-do"></div>
+      </div>
+      <div class="field"><div class="ui toggle checkbox"><input type="checkbox" id="f-kupony" checked disabled><label>Oparta na kuponach</label></div></div>
+      <div class="field"><div class="ui toggle checkbox"><input type="checkbox" id="f-wlaczona"><label>Włączona</label></div></div>
+      <h4 class="ui dividing header">Reguły</h4><div id="f-reguly" class="ui list"></div>
+      <h4 class="ui dividing header">Akcje</h4><div id="f-akcje" class="ui list"></div>
+      <h4 class="ui dividing header">Kupony</h4>
+      <div class="ui warning message">Kopia nie ma kuponów. Po zapisaniu wygeneruj nowe kupony w zakładce "Kupony".</div>
+      <button class="ui labeled icon primary button" type="submit"><i class="save icon"></i>Zapisz zmiany</button>
+      <a class="ui button" onclick="pokazListe()">Anuluj</a>
+    </form>
+  </div>
+</div>
+
+<script>
+var promocje = [
+  { kod:'BLACK-WEEK-AKCESORIA', nazwa:'Black Week: -15% na akcesoria', prio:10, kupony:true, od:'2026-11-23', do:'2026-11-30', wlaczona:true, wyl:false,
+    reguly:['Koszyk zawiera produkt z taksonu "Akcesoria"','Wartość koszyka co najmniej 200 zł'], akcje:['Rabat procentowy na produkty z taksonu "Akcesoria": 15%'] },
+  { kod:'NEWSLETTER-50', nazwa:'Newsletter: 50 zł na obiektywy', prio:5, kupony:true, od:'2026-10-01', do:'2026-10-31', wlaczona:false, wyl:true,
+    reguly:['Koszyk zawiera produkt z taksonu "Obiektywy"','Wartość koszyka co najmniej 1500 zł'], akcje:['Rabat kwotowy na zamówienie: 50 zł'] },
+  { kod:'SALON-WARSZAWA', nazwa:'Otwarcie salonu: darmowa dostawa', prio:3, kupony:true, od:'2026-09-15', do:'2026-09-30', wlaczona:false, wyl:false,
+    reguly:['Kanał: cyfrowe.pl'], akcje:['Darmowa dostawa'] }
+];
+var biezaca = null;
+function dzis(){ return '2026-11-02'; }
+function wazna(p){ return p.od <= dzis() && dzis() <= p.do; }
+function wiersz(p, i){
+  return '<tr><td>'+p.kod+'</td><td>'+p.nazwa+'</td><td>'+p.prio+'</td>'+
+    '<td>'+(p.kupony?'<span class="ui green label">Tak</span>':'<span class="ui red label">Nie</span>')+'</td>'+
+    '<td>'+(p.od?p.od+' - '+p.do:'<span class="ui grey label">brak dat</span>')+'</td>'+
+    '<td>'+(p.wlaczona?'<span class="ui green label">Tak</span>':'<span class="ui red label">Nie</span>')+'</td>'+
+    '<td style="white-space:nowrap"><div class="ui small buttons">'+
+      '<a class="ui labeled icon button" onclick="edytuj('+i+')"><i class="pencil icon"></i>Edytuj</a>'+
+      '<a class="ui labeled icon teal button" onclick="kopiuj('+i+')"><i class="copy icon"></i>Kopiuj<span class="new-badge">nowe</span></a>'+
+      '<a class="ui labeled icon red button"><i class="trash icon"></i>Usuń</a>'+
+    '</div></td></tr>';
+}
+function rysuj(){ document.querySelector('#tabela tbody').innerHTML = promocje.map(wiersz).join(''); }
+function pokazListe(){ document.getElementById('formularz').classList.add('hidden'); document.getElementById('lista').classList.remove('hidden'); rysuj(); }
+function kopiuj(i){
+  var z = promocje[i];
+  var k = { kod:z.kod+'-kopia', nazwa:z.nazwa+' - kopia', prio:z.prio, kupony:z.kupony, od:'', do:'', wlaczona:false, wyl:z.wyl,
+            reguly:z.reguly.slice(), akcje:z.akcje.slice(), zrodlo:z.nazwa };
+  promocje.splice(i+1, 0, k);
+  edytuj(i+1);
+  document.getElementById('f-blad').classList.add('hidden');
+}
+function edytuj(i){
+  biezaca = i; var p = promocje[i];
+  document.getElementById('lista').classList.add('hidden');
+  document.getElementById('formularz').classList.remove('hidden');
+  document.querySelector('#formularz .info.message').classList.toggle('hidden', !p.zrodlo);
+  document.getElementById('f-zrodlo').textContent = p.zrodlo || '';
+  document.getElementById('f-sub').textContent = p.nazwa;
+  document.getElementById('f-crumb').textContent = p.nazwa;
+  document.getElementById('f-kod').value = p.kod;
+  document.getElementById('f-nazwa').value = p.nazwa;
+  document.getElementById('f-opis').value = '';
+  document.getElementById('f-prio').value = p.prio;
+  document.getElementById('f-wyl').checked = p.wyl;
+  document.getElementById('f-od').value = p.od;
+  document.getElementById('f-do').value = p.do;
+  document.getElementById('f-wlaczona').checked = p.wlaczona;
+  document.getElementById('f-reguly').innerHTML = p.reguly.map(function(r){return '<div class="item"><i class="check icon"></i>'+r+'</div>';}).join('');
+  document.getElementById('f-akcje').innerHTML = p.akcje.map(function(r){return '<div class="item"><i class="check icon"></i>'+r+'</div>';}).join('');
+  ['pole-kod','pole-nazwa','pole-od','pole-do'].forEach(function(id){ document.getElementById(id).classList.remove('error'); });
+}
+function zapisz(e){
+  e.preventDefault();
+  var p = promocje[biezaca], bledy = [], pola = [];
+  var kod = document.getElementById('f-kod').value.trim(), nazwa = document.getElementById('f-nazwa').value.trim();
+  var od = document.getElementById('f-od').value, dd = document.getElementById('f-do').value, wl = document.getElementById('f-wlaczona').checked;
+  ['pole-kod','pole-nazwa','pole-od','pole-do'].forEach(function(id){ document.getElementById(id).classList.remove('error'); });
+  if (wl && /-kopia/i.test(kod)) { bledy.push('Kod zawiera "-kopia". Zmień kod, zanim włączysz promocję.'); pola.push('pole-kod'); }
+  if (wl && /- kopia/i.test(nazwa)) { bledy.push('Nazwa zawiera "- kopia". Zmień nazwę, zanim włączysz promocję.'); pola.push('pole-nazwa'); }
+  if (wl && (!od || !dd)) { bledy.push('Kopia nie ma dat. Wpisz datę rozpoczęcia i zakończenia.'); pola.push('pole-od','pole-do'); }
+  if (od && dd && dd < od) { bledy.push('Data zakończenia jest wcześniejsza niż data rozpoczęcia.'); pola.push('pole-do'); }
+  if (promocje.some(function(x, j){ return j !== biezaca && x.kod === kod; })) { bledy.push('Promocja o tym kodzie już istnieje.'); pola.push('pole-kod'); }
+  if (bledy.length) {
+    document.getElementById('f-bledy').innerHTML = bledy.map(function(b){return '<li>'+b+'</li>';}).join('');
+    document.getElementById('f-blad').classList.remove('hidden');
+    pola.forEach(function(id){ document.getElementById(id).classList.add('error'); });
+    return false;
+  }
+  p.kod = kod; p.nazwa = nazwa; p.od = od; p.do = dd; p.wlaczona = wl; var z = p.zrodlo; delete p.zrodlo;
+  document.getElementById('f-blad').classList.add('hidden');
+  pokazListe();
+  if (z) {
+    document.getElementById('flash-text').textContent = 'Zapisano kopię promocji "' + z + '" jako "' + nazwa + '"' + (wl ? ', włączoną.' : ', wyłączoną.');
+    document.getElementById('flash').classList.remove('hidden');
+  }
+  return false;
+}
+rysuj();
+</script>
+</body>
+</html>
